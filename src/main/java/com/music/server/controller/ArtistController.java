@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = { "http://localhost:8080", "https://music.jackdo1012.tk", "https://music-server.jackdo1012.tk" })
 @RestController
 @RequestMapping("/api/artists")
 public class ArtistController {

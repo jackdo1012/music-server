@@ -1,6 +1,5 @@
 package com.music.server.controller;
 
-import com.music.server.domain.Artist;
 import com.music.server.domain.Music;
 import com.music.server.repo.ArtistRepository;
 import com.music.server.repo.MusicRepository;
@@ -16,7 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import java.util.*;
 
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = { "http://localhost:8080", "https://music.jackdo1012.tk", "https://music-server.jackdo1012.tk" })
 @RestController
 @RequestMapping("/api/musics")
 public class MusicController {
@@ -26,7 +25,8 @@ public class MusicController {
     MusicServiceImpl musicService;
 
     @Autowired
-    public MusicController(MusicRepository musicRepository, ArtistRepository artistRepository, ArtistServiceImpl artistService, MusicServiceImpl musicService) {
+    public MusicController(MusicRepository musicRepository, ArtistRepository artistRepository,
+            ArtistServiceImpl artistService, MusicServiceImpl musicService) {
         this.musicRepository = musicRepository;
         this.artistRepository = artistRepository;
         this.artistService = artistService;
@@ -92,7 +92,7 @@ public class MusicController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Music> updateMusic(@PathVariable("id") UUID id, @RequestBody Music music,
-                                             HttpServletRequest request) {
+            HttpServletRequest request) {
         boolean auth = (boolean) request.getAttribute("auth");
         if (!auth) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
