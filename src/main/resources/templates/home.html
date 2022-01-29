@@ -142,7 +142,9 @@
                 </thead>
                 <tbody>
                     <tr th:each="artist: ${artists}">
-                        <td th:text="${artist.name}"></td>
+                        <td>
+                            <span th:text="${artist.name}"></span>
+                        </td>
                         <td>
                             <span
                                 th:each="song, iter: ${artist.songs}"
