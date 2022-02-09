@@ -1,26 +1,34 @@
 package com.music.server.service;
 
+import com.google.api.services.youtube.model.Video;
 import com.music.server.domain.Artist;
 import com.music.server.domain.Music;
 import com.music.server.repo.ArtistRepository;
 import com.music.server.repo.MusicRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.Nullable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.IOException;
+import java.time.Duration;
 import java.util.*;
 
 @Service
 public class MusicServiceImpl implements MusicService {
     MusicRepository musicRepository;
     ArtistRepository artistRepository;
+    YoutubeServiceImpl youtubeService;
+    ArtistServiceImpl artistService;
+    private final SimpMessagingTemplate simpMessagingTemplate;
 
     @Autowired
-    public MusicServiceImpl(MusicRepository musicRepository, ArtistRepository artistRepository) {
+    public MusicServiceImpl(MusicRepository musicRepository, ArtistRepository artistRepository, YoutubeServiceImpl youtubeService, SimpMessagingTemplate simpMessagingTemplate, ArtistServiceImpl artistService) {
         this.musicRepository = musicRepository;
         this.artistRepository = artistRepository;
+        this.youtubeService = youtubeService;
+        this.simpMessagingTemplate = simpMessagingTemplate;
+        this.artistService = artistService;
     }
 
     @Override
@@ -34,14 +42,38 @@ public class MusicServiceImpl implements MusicService {
             artist.removeSong(music.get());
             if (artist.getSongs().size() == 0) {
                 artistRepository.delete(artist);
-            }
-            musicRepository.deleteById(id);
-            if (artist.getSongs().size() != 0) {
+            } else {
                 artistRepository.save(artist);
             }
+            musicRepository.deleteById(id);
+            for (int i = 0; i < youtubeService.getMusicQueue().toArray().size(); i++) {
+                if (youtubeService.getMusicQueue().toArray().get(i).getId().equals(id)) {
+                    youtubeService.getMusicQueue().removeAt(i);
+                }
+            }
+            simpMessagingTemplate.convertAndSend("/topic/updateTrack", 1);
             return true;
         }
+    }
 
+    @Override
+    public Music addNewMusic(String name, String artist, String url) {
+        Music _music = new Music(name, artist, url);
+        Video videos = null;
+        try {
+            videos = youtubeService.getYoutubeData(_music.getVidId());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if (videos != null) {
+            _music.setDuration(Duration.parse(videos.getContentDetails().getDuration()));
+            _music.setThumbnail(videos.getSnippet().getThumbnails().getMaxres().getUrl());
+        }
+        musicRepository.save(_music);
+        artistService.addSongToArtist(_music.getArtist(), _music);
+        youtubeService.getMusicQueue().enqueue(_music);
+        simpMessagingTemplate.convertAndSend("/topic/updateTrack", 1);
+        return _music;
     }
 
     @Override
@@ -54,31 +86,15 @@ public class MusicServiceImpl implements MusicService {
                 _music.setName(name);
             if (url != null) {
                 _music.setUrl(url);
-                URL urlParsed = null;
+                Video videos = null;
                 try {
-                    urlParsed = new URL(url);
-                } catch (MalformedURLException e) {
+                    videos = youtubeService.getYoutubeData(_music.getVidId());
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
-                if (urlParsed != null) {
-
-                    String host = urlParsed.getHost();
-                    String vidId = _music.getVidId();
-                    if (host.contains("youtube.com")) {
-                        String[] params = urlParsed.getQuery().split("&");
-                        Map<String, String> map = new HashMap<>();
-
-                        for (String param : params) {
-                            String key = param.split("=")[0];
-                            String value = param.split(key + "=")[1];
-                            map.put(key, value);
-                        }
-                        vidId = map.get("v");
-                    } else if (host.contains("youtu.be")) {
-                        String path = urlParsed.getPath();
-                        vidId = path.split("/")[1];
-                    }
-                    _music.setVidId(vidId);
+                if (videos != null) {
+                    _music.setDuration(Duration.parse(videos.getContentDetails().getDuration()));
+                    _music.setThumbnail(videos.getSnippet().getThumbnails().getMaxres().getUrl());
                 }
             }
             if (artist != null) {
@@ -96,7 +112,9 @@ public class MusicServiceImpl implements MusicService {
                 }
                 artistRepository.save(newArtist);
             }
-            return musicRepository.save(_music);
+            Music newMusic = musicRepository.save(_music);
+            simpMessagingTemplate.convertAndSend("/topic/updateTrack", 1);
+            return newMusic;
         } else {
             return null;
         }

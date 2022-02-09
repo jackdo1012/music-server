@@ -15,7 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import java.util.*;
 
-@CrossOrigin(origins = { "http://localhost:8080", "https://music.jackdo1012.tk", "https://music-server.jackdo1012.tk" })
+@CrossOrigin(origins = {"http://localhost:1880", "http://localhost:8080/", "https://music.jackdo1012.tk", "https://music-server.jackdo1012.tk"})
 @RestController
 @RequestMapping("/api/musics")
 public class MusicController {
@@ -26,7 +26,7 @@ public class MusicController {
 
     @Autowired
     public MusicController(MusicRepository musicRepository, ArtistRepository artistRepository,
-            ArtistServiceImpl artistService, MusicServiceImpl musicService) {
+                           ArtistServiceImpl artistService, MusicServiceImpl musicService) {
         this.musicRepository = musicRepository;
         this.artistRepository = artistRepository;
         this.artistService = artistService;
@@ -54,12 +54,11 @@ public class MusicController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         try {
-            Music _music = musicRepository
-                    .save(new Music(music.getName(), music.getArtist(), music.getUrl()));
-            artistService.addSongToArtist(music.getArtist(), _music);
+            Music _music = musicService.addNewMusic(music.getName(), music.getArtist(), music.getUrl());
 
             return new ResponseEntity<>(_music, HttpStatus.CREATED);
         } catch (Exception e) {
+            System.out.println(e.getMessage());
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -92,7 +91,7 @@ public class MusicController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Music> updateMusic(@PathVariable("id") UUID id, @RequestBody Music music,
-            HttpServletRequest request) {
+                                             HttpServletRequest request) {
         boolean auth = (boolean) request.getAttribute("auth");
         if (!auth) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
@@ -120,8 +119,8 @@ public class MusicController {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             }
         } catch (Exception e) {
+            System.out.println(e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 }

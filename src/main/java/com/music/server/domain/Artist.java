@@ -17,7 +17,7 @@ public class Artist {
     @Column(name = "name")
     private String name;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Music> songs = new ArrayList<>();
 
     public Artist() {

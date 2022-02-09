@@ -2,8 +2,10 @@ package com.music.server.domain;
 
 import javax.persistence.*;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -11,7 +13,6 @@ import java.util.UUID;
 @Entity
 @Table(name = "musics")
 public class Music {
-
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -28,6 +29,12 @@ public class Music {
 
     @Column(name = "vidId")
     private String vidId;
+
+    @Column(name = "duration")
+    private Duration duration;
+
+    @Column(name = "thumbnail")
+    private String thumbnail;
 
     public Music() {
 
@@ -50,14 +57,12 @@ public class Music {
                     String value = param.split(key + "=")[1];
                     map.put(key, value);
                 }
-                String vidId = map.get("v");
-                this.vidId = vidId;
+                this.vidId = map.get("v");
             } else if (host.contains("youtu.be")) {
                 String path = urlParsed.getPath();
-                String vidId = path.split("/")[1];
-                this.vidId = vidId;
+                this.vidId = path.split("/")[1];
             }
-        } catch (MalformedURLException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -88,6 +93,31 @@ public class Music {
 
     public void setUrl(String url) {
         this.url = url;
+        URL urlParsed = null;
+        try {
+            urlParsed = new URL(url);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
+        String host = null;
+        if (urlParsed != null) {
+            host = urlParsed.getHost();
+            if (host.contains("youtube.com")) {
+                String[] params = urlParsed.getQuery().split("&");
+                Map<String, String> map = new HashMap<>();
+
+                for (String param : params) {
+                    String key = param.split("=")[0];
+                    String value = param.split(key + "=")[1];
+                    map.put(key, value);
+                }
+                this.vidId = map.get("v");
+            } else if (host.contains("youtu.be")) {
+                String path = urlParsed.getPath();
+                this.vidId = path.split("/")[1];
+            }
+        }
     }
 
     public String getVidId() {
@@ -96,6 +126,22 @@ public class Music {
 
     public void setVidId(String vidId) {
         this.vidId = vidId;
+    }
+
+    public Duration getDuration() {
+        return duration;
+    }
+
+    public void setDuration(Duration duration) {
+        this.duration = duration;
+    }
+
+    public String getThumbnail() {
+        return thumbnail;
+    }
+
+    public void setThumbnail(String thumbnail) {
+        this.thumbnail = thumbnail;
     }
 
     @Override
