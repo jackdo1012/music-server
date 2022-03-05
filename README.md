@@ -2,7 +2,7 @@
 
 ## Client
 
-[Github](https://github.com/jackdo1012/music-client)  
+[Github](https://github.com/jackdo1012/music)  
 [URL](https://music.jackdo1012.tk)
 
 ## Build
