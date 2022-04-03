@@ -3,6 +3,7 @@ const saveBtn = document.querySelector(".save");
 if (saveBtn) {
     saveBtn.onclick = (e) => {
         e.preventDefault();
+        saveBtn.disabled = true;
         const name = document.getElementById("name").value.trim();
         const url = document.getElementById("url").value.trim();
         const artist = document.getElementById("artist").value.trim();

@@ -16,6 +16,8 @@
         <link rel="shortcut icon" href="/img/avatar.png" type="image/png" />
         <script>
             const deleteMusic = (id) => {
+                const deleteBtn = document.querySelector(".delete-" + id);
+                deleteBtn.disabled = true;
                 fetch(`/api/musics/${id}`, {
                     method: "DELETE",
                 }).then((response) => {
@@ -120,8 +122,7 @@
                         </td>
                         <td th:if="${auth}">
                             <button
-                                class="btn btn-primary"
-                                th:attr="onclick=|deleteMusic('${music.id}')|"
+                                th:attr="onclick=|deleteMusic('${music.id}')|,class=|btn btn-primary delete-${music.id}|"
                             >
                                 Delete
                             </button>
